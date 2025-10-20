@@ -91,6 +91,8 @@
   <div id="dateRange"></div>
 
   <div>
+  <label for="fname">Password:</label>
+  <input type="password" id="fname" name="fname" autocomplete="new-password">
     <button id="switchWeek">Switch Week (A ↔ B)</button>
     <button id="exportCSV">Export CSV</button>
     <br>
@@ -189,6 +191,28 @@
       updateDisplay(currentWeekType);
     });
 
+    // === PASSWORD PROTECTION FOR SWITCH ===
+    // change the password you want here
+    const requiredPassword = "12345678";
+    const pwdInput = document.getElementById("fname");
+    const switchBtn = document.getElementById("switchWeek");
+
+    // start disabled
+    switchBtn.disabled = true;
+
+    function checkPasswordAndToggle() {
+      if (pwdInput.value === requiredPassword) {
+        switchBtn.disabled = false;
+      } else {
+        switchBtn.disabled = true;
+      }
+    }
+
+    // Check on input and on page load
+    pwdInput.addEventListener("input", checkPasswordAndToggle);
+    // in case browser autofills (some browsers fire input, but ensure consistency)
+    window.addEventListener("load", checkPasswordAndToggle);
+
     document.getElementById("refDate").addEventListener("change", (e) => {
       const newDate = new Date(e.target.value);
       if (!isNaN(newDate)) {
@@ -217,4 +241,7 @@
 
 </body>
 </html>
+
+
+
 
