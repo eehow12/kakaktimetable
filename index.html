@@ -1,332 +1,224 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jadwal Pengasuh Mingguan</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(180deg, #d9e3f0, #edf2f7);
-      text-align: center;
-      padding: 20px;
-      transition: background 0.3s ease;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duty Roster</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(to bottom right, #d6e1e8, #b8c7d1);
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    color: #333;
+  }
 
-    .banner {
-      color: white;
-      padding: 15px;
-      border-radius: 12px;
-      font-size: 1.4em;
-      font-weight: bold;
-      margin-bottom: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      transition: background 0.3s ease;
-    }
-    .weekA { background: linear-gradient(90deg, #007bff, #00bfff); }
-    .weekB { background: linear-gradient(90deg, #28a745, #70db70); }
+  h1 {
+    font-size: 1.8em;
+    margin-bottom: 0.3em;
+  }
 
-    /* Subtle date-range box (smaller than banner) */
-    #dateRange {
-      display: inline-block;
-      font-size: 1em;
-      margin-bottom: 16px;
-      color: #2f3e46;
-      background: linear-gradient(90deg, #eef3f8, #f7fafc);
-      border: 1px solid #c5d0da;
-      padding: 6px 12px;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    }
+  h2 {
+    margin-top: 0;
+    font-weight: 500;
+    color: #444;
+  }
 
-    .controls { margin-bottom: 10px; }
+  table {
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: #fdfdfd;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
 
-    button {
-      margin: 6px;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1em;
-      color: white;
-      background: linear-gradient(90deg, #007bff, #00bfff);
-      transition: background 0.3s ease, transform 0.1s ease, opacity .2s;
-    }
-    button:hover { opacity: .95; transform: scale(1.02); }
+  th, td {
+    padding: 14px;
+    border: 1px solid #ccc;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+  }
 
-    input[type="date"], input[type="password"] {
-      margin: 6px;
+  th {
+    background: rgba(200, 220, 235, 0.8);
+    font-weight: 600;
+  }
+
+  .week-row {
+    background: rgba(230, 238, 245, 0.7);
+    border: 1px solid #aebdc6;
+    font-size: 0.9em;
+    padding: 8px;
+  }
+
+  .today {
+    background: #ffeaf3 !important;
+    font-weight: bold;
+    color: #d6336c;
+    border: 2px solid #f48fb1;
+  }
+
+  .night-shift {
+    background-color: #fff5e6;
+    font-weight: bold;
+    color: #e65100;
+  }
+
+  .night-shift-line {
+    font-size: 1.1em;
+    background: #ffe8cc;
+    color: #d35400;
+    padding: 10px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 10px 0;
+    font-weight: 600;
+  }
+
+  button {
+    padding: 10px 16px;
+    margin: 5px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  button:hover {
+    background-color: #357abd;
+  }
+
+  .cell-bg {
+    opacity: 0.25;
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    font-size: 1.4em;
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    th, td {
       padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-      width: 180px;
-      max-width: 60%;
-    }
-
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      font-size: 0.85em;
     }
 
     table {
-      width: 100%;
-      min-width: 700px;
-      max-width: 900px;
-      margin: 0 auto;
-      border-collapse: collapse;
-      background-color: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      width: 95%;
     }
-
-    th, td {
-      border: 1px solid #e6e9ee;
-      padding: 10px;
-      position: relative;
-      overflow: hidden;
-      word-wrap: break-word;
-      font-size: 0.95em;
-      vertical-align: middle;
-    }
-
-    th { background-color: #f8fafc; color: #334155; font-weight: 600; }
-
-    /* Centered emoji backgrounds (perfectly centered) */
-    td::before {
-      content: attr(data-emoji);
-      position: absolute;
-      font-size: 2.2em;
-      opacity: 0.08;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      user-select: none;
-    }
-
-    tr:hover { background-color: #fbfdff; }
-
-    .today { background-color: #ffeef5 !important; /* soft pink */ font-weight: 700; }
-
-    /* Mobile tweaks */
-    @media (max-width: 768px) {
-      .banner { font-size: 1.2em; padding: 10px; }
-      button { padding: 8px 12px; font-size: 0.95em; }
-      th, td { padding: 8px; font-size: 0.85em; }
-      #dateRange { font-size: 0.9em; padding: 5px 10px; }
-    }
-    @media (max-width: 480px) {
-      body { padding: 10px; }
-      button { display: block; width: 90%; margin: 8px auto; }
-      input[type="date"], input[type="password"] { width: 90%; }
-      table { min-width: 650px; }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
-  <div id="banner" class="banner"></div>
-  <div id="dateRange"></div>
+<h1>Duty Roster 🍳🧼</h1>
+<h2 id="weekLabel">Loading...</h2>
+<div id="nightShiftLine" class="night-shift-line"></div>
+<div>
+  <button onclick="switchWeek('A')">Switch to Week A</button>
+  <button onclick="switchWeek('B')">Switch to Week B</button>
+</div>
+<table id="rosterTable"></table>
 
-  <div class="controls">
-    <label for="fname">Password:</label>
-    <input type="password" id="fname" name="fname" autocomplete="new-password">
-    <button id="switchWeek">Switch Week (A ↔ B)</button>
-    <button id="exportCSV">Export CSV</button>
-    <br/>
-    <label for="refDate">Change reference (choose a date whose week should become Week A):</label>
-    <input type="date" id="refDate">
-  </div>
+<script>
+// ---------------- TIMEZONE FIX (Malaysia GMT+8) ---------------- //
+function toMalaysiaTime(date) {
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+  return new Date(utc + 8 * 60 * 60 * 1000);
+}
 
-  <div class="table-container">
-    <table id="scheduleTable" role="table" aria-label="Jadwal Pengasuh Mingguan"></table>
-  </div>
+// Reference Sunday for Week A (19 Oct 2025)
+const referenceDate = new Date("2025-10-19T00:00:00+08:00");
+let currentWeek = getWeekType(referenceDate);
 
-  <script>
-    // --- Config / Data ---
-    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-    const weekA = { name: "Minggu A", onCall: "Kusni", morning: "Ririn" };
-    const weekB = { name: "Minggu B", onCall: "Ririn", morning: "Kusni" };
-    const days = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
-    const emojis = ["🍳","☕","🧺","🧴","🫖","🍽️","🧹"];
+// Determine if Week A or B
+function getWeekType(ref) {
+  const nowMY = toMalaysiaTime(new Date());
+  const diffDays = Math.floor((nowMY - ref) / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+  return diffWeeks % 2 === 0 ? "A" : "B";
+}
 
-    // --- Anchor (cornerstone) ---
-    // The week that contains 20–25 Oct 2025 must be Week A.
-    // Determine the Sunday (UTC) for that week and use it as the default anchor.
-    function toUTCDate(y,m,d){
-      return new Date(Date.UTC(y,m,d));
-    }
-    const defaultAnchorSunday = getSundayUTC(toUTCDate(2025,9,20)); // 2025-10-20 -> week that includes 20-25; get Sunday -> 2025-10-19
-    let anchorSunday = new Date(defaultAnchorSunday.getTime()); // anchor in UTC
-    // displayedWeekIndex is the week-index relative to anchorSunday that is currently displayed.
-    // initial display = the index of current calendar week (real current week)
-    let displayedWeekIndex = weekIndexForDate(new Date());
+function getWeekRange(ref) {
+  const nowMY = toMalaysiaTime(new Date());
+  const diffDays = Math.floor((nowMY - ref) / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+  const start = new Date(ref.getTime() + diffWeeks * 7 * 86400000);
+  const end = new Date(start.getTime() + 6 * 86400000);
+  return { start, end };
+}
 
-    // --- Utilities (UTC-consistent) ---
-    function getSundayUTC(date){
-      // Convert input date to UTC midnight, then shift back by weekday to get Sunday (UTC)
-      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const weekday = d.getUTCDay(); // 0..6 (Sun..Sat)
-      d.setUTCDate(d.getUTCDate() - weekday);
-      // normalize to midnight UTC
-      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-    }
+// ---------------- TIMETABLE DATA ---------------- //
+const weekA = [
+  ["Sunday", "Kusni 🍳", "Afiq 🧼"],
+  ["Monday", "Kusni 🍳", "Afiq 🧼"],
+  ["Tuesday", "Kusni 🍳", "Afiq 🧼"],
+  ["Wednesday", "Afiq 🍳", "Kusni 🧼"],
+  ["Thursday", "Afiq 🍳", "Kusni 🧼"],
+  ["Friday", "Afiq 🍳", "Kusni 🧼"],
+  ["Saturday", "Afiq 🍳", "Kusni 🧼"]
+];
 
-    function weekIndexForDate(date){
-      const sunday = getSundayUTC(date);
-      const diff = sunday.getTime() - anchorSunday.getTime();
-      return Math.floor(diff / WEEK_MS);
-    }
+const weekB = [
+  ["Sunday", "Afiq 🍳", "Kusni 🧼"],
+  ["Monday", "Afiq 🍳", "Kusni 🧼"],
+  ["Tuesday", "Afiq 🍳", "Kusni 🧼"],
+  ["Wednesday", "Kusni 🍳", "Afiq 🧼"],
+  ["Thursday", "Kusni 🍳", "Afiq 🧼"],
+  ["Friday", "Kusni 🍳", "Afiq 🧼"],
+  ["Saturday", "Kusni 🍳", "Afiq 🧼"]
+];
 
-    function weekTypeFromIndex(index){
-      return (index % 2 === 0) ? 'A' : 'B';
-    }
+function renderTable() {
+  const table = document.getElementById("rosterTable");
+  const data = currentWeek === "A" ? weekA : weekB;
+  const todayMY = toMalaysiaTime(new Date());
+  const todayIndex = todayMY.getDay(); // Sunday=0
 
-    function formatDate(date){
-      return date.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
-    }
+  const weekRange = getWeekRange(referenceDate);
+  const startDate = weekRange.start.toLocaleDateString("en-GB");
+  const endDate = weekRange.end.toLocaleDateString("en-GB");
 
-    function getSundayOfIndex(index){
-      return new Date(anchorSunday.getTime() + index * WEEK_MS);
-    }
+  document.getElementById("weekLabel").textContent = `Week ${currentWeek} (${startDate} - ${endDate})`;
 
-    // --- Rendering ---
-    function updateDisplayForIndex(index){
-      displayedWeekIndex = index;
-      const type = weekTypeFromIndex(index);
-      const data = (type === 'A') ? weekA : weekB;
+  let html = `
+    <tr class="week-row"><th colspan="3">Week ${currentWeek} (${startDate} - ${endDate})</th></tr>
+    <tr><th>Day</th><th>Morning Shift</th><th>Night Shift</th></tr>
+  `;
 
-      // banner
-      const banner = document.getElementById('banner');
-      banner.className = `banner week${type}`;
-      banner.textContent = `${data.name} — ${data.onCall} sedang bertugas shift malam (on-call)`;
+  data.forEach((row, index) => {
+    const isToday = index === todayIndex;
+    html += `
+      <tr class="${isToday ? "today" : ""}">
+        <td>${row[0]} ${isToday ? "🍓" : ""}<span class="cell-bg">🍳</span></td>
+        <td>${row[1]}<span class="cell-bg">🥄</span></td>
+        <td class="night-shift">${row[2]}<span class="cell-bg">🛁</span></td>
+      </tr>
+    `;
+  });
 
-      // make switch button match banner color with fade (CSS transition)
-      const switchBtn = document.getElementById('switchWeek');
-      switchBtn.style.background = (type === 'A')
-        ? 'linear-gradient(90deg, #007bff, #00bfff)'
-        : 'linear-gradient(90deg, #28a745, #70db70)';
+  table.innerHTML = html;
 
-      // date range box: compute displayed week's sunday and saturday (using UTC sunday)
-      const sunday = getSundayOfIndex(index);
-      const saturday = new Date(sunday.getTime() + 6 * 24*60*60*1000);
-      const rangeStr = `${formatDate(sunday)} – ${formatDate(saturday)}`;
-      const dateRangeEl = document.getElementById('dateRange');
+  // Update night shift line
+  const nightPerson = currentWeek === "A" ? "Afiq 🧼" : "Kusni 🧼";
+  document.getElementById("nightShiftLine").textContent = `🌙 Night Shift this week: ${nightPerson}`;
+}
 
-      dateRangeEl.textContent = `${data.name} • ${rangeStr}`;
+function switchWeek(type) {
+  currentWeek = type;
+  renderTable();
+}
 
-      // change subtle tint of dateRange to match week type (soft fade)
-      if(type === 'A'){
-        dateRangeEl.style.background = 'linear-gradient(90deg,#eef6ff,#f5fbff)';
-        dateRangeEl.style.borderColor = '#c9def8';
-        dateRangeEl.style.color = '#0f172a';
-      } else {
-        dateRangeEl.style.background = 'linear-gradient(90deg,#edfbef,#f7fff6)';
-        dateRangeEl.style.borderColor = '#c9ecca';
-        dateRangeEl.style.color = '#0f172a';
-      }
+renderTable();
+</script>
 
-      // determine whether displayed week is the same as real current week (for showing 'today' strawberry)
-      const realCurrentWeekIndex = weekIndexForDate(new Date());
-      const showTodayMarker = (realCurrentWeekIndex === displayedWeekIndex);
-
-      renderTable(data, showTodayMarker);
-    }
-
-    function renderTable(data, showTodayMarker){
-      const todayIndex = getSundayUTC(new Date()).getTime() === getSundayOfIndex(displayedWeekIndex).getTime()
-        ? new Date().getUTCDay()
-        : -1; // if displayed week != real week, set -1 so no today marker
-
-      let html = `
-        <tr>
-          <th>Hari</th>
-          <th>Pagi – 11:00</th>
-          <th>11:00 – 14:00</th>
-          <th>14:00 – 16:00</th>
-          <th>16:00 – 18:00</th>
-          <th>18:00 – Malam</th>
-          <th>Shift Malam (on-call)</th>
-        </tr>
-      `;
-
-      days.forEach((day, i) => {
-        const isTodayClass = (showTodayMarker && i === new Date().getUTCDay()) ? 'today' : '';
-        const emoji = emojis[i % emojis.length];
-        const dayLabel = (showTodayMarker && i === new Date().getUTCDay()) ? `${day} 🍓` : day;
-
-        html += `
-          <tr class="${isTodayClass}">
-            <td data-emoji="${emoji}">${dayLabel}</td>
-            <td data-emoji="${emoji}">${data.morning}</td>
-            <td data-emoji="${emoji}">${data.onCall === data.morning ? '—' : data.onCall}</td>
-            <td data-emoji="${emoji}">${data.morning}</td>
-            <td data-emoji="${emoji}">${data.onCall}</td>
-            <td data-emoji="${emoji}">${data.morning}</td>
-            <td data-emoji="${emoji}">${data.onCall}</td>
-          </tr>
-        `;
-      });
-
-      document.getElementById('scheduleTable').innerHTML = html;
-    }
-
-    // --- Password gate (unchanged) ---
-    const requiredPassword = '87654321';
-    const pwdInput = document.getElementById('fname');
-    const switchBtn = document.getElementById('switchWeek');
-    switchBtn.disabled = true;
-    function checkPasswordAndToggle(){ switchBtn.disabled = pwdInput.value !== requiredPassword; }
-    pwdInput.addEventListener('input', checkPasswordAndToggle);
-    window.addEventListener('load', checkPasswordAndToggle);
-
-    // --- Interactivity: switch button toggles to the NEXT week type (forward) ---
-    switchBtn.addEventListener('click', () => {
-      // compute current real week index
-      const realIndex = weekIndexForDate(new Date());
-      // if displayed currently equals realIndex, move +1 to show alternate type; otherwise also move +1
-      displayedWeekIndex = displayedWeekIndex + 1;
-      updateDisplayForIndex(displayedWeekIndex);
-    });
-
-    // export CSV (same)
-    document.getElementById('exportCSV').addEventListener('click', () => {
-      const rows = document.querySelectorAll('#scheduleTable tr');
-      const csv = Array.from(rows).map(row =>
-        Array.from(row.children).map(cell => `"${cell.innerText.replace(/"/g,'""')}"`).join(',')
-      ).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const displayedType = weekTypeFromIndex(displayedWeekIndex);
-      a.download = `Jadwal-${displayedType}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    // refDate: when user chooses a date, make that date's week become Week A (anchor update).
-    // This follows the behavior you had: ref date defines the anchor week which is Week A from then on.
-    document.getElementById('refDate').addEventListener('change', (e) => {
-      const val = e.target.value;
-      if (!val) return;
-      const chosen = new Date(val + 'T00:00:00'); // local midnight
-      const chosenSundayUTC = getSundayUTC(chosen);
-      anchorSunday = new Date(chosenSundayUTC.getTime()); // new anchor (UTC)
-      // after changing anchor, set displayed to the real current week index relative to new anchor:
-      displayedWeekIndex = weekIndexForDate(new Date());
-      updateDisplayForIndex(displayedWeekIndex);
-    });
-
-    // --- initial render ---
-    // ensure anchorSunday default corresponds to week that contains 20–25 Oct 2025 (cornerstone)
-    anchorSunday = new Date(defaultAnchorSunday.getTime());
-    displayedWeekIndex = weekIndexForDate(new Date()); // show current calendar week by default
-    updateDisplayForIndex(displayedWeekIndex);
-  </script>
 </body>
 </html>
