@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f7f9fc;
+      background: linear-gradient(180deg, #d9e3f0, #edf2f7);
       text-align: center;
       padding: 20px;
       transition: background 0.3s ease;
@@ -27,10 +27,18 @@
     .weekA { background: linear-gradient(90deg, #007bff, #00bfff); }
     .weekB { background: linear-gradient(90deg, #28a745, #70db70); }
 
+    /* Softer, subtle date range style */
     #dateRange {
-      font-size: 1.1em;
+      display: inline-block;
+      font-size: 1em;
       margin-bottom: 20px;
-      color: #333;
+      color: #2f3e46;
+      background: linear-gradient(90deg, #e8eef3, #f5f7fa);
+      border: 1px solid #c5d0da;
+      padding: 6px 14px;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      opacity: 0.95;
     }
 
     .controls {
@@ -90,20 +98,22 @@
       overflow: hidden;
       word-wrap: break-word;
       font-size: 0.95em;
+      vertical-align: middle;
     }
 
     th {
       background-color: #f2f2f2;
     }
 
-    /* Emoji backgrounds */
+    /* Centered emoji backgrounds */
     td::before {
       content: attr(data-emoji);
       position: absolute;
-      font-size: 2em;
+      font-size: 2.2em;
       opacity: 0.08;
-      top: 30%;
-      left: 45%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       pointer-events: none;
       user-select: none;
     }
@@ -113,7 +123,7 @@
     }
 
     .today {
-      background-color: #fff6b3 !important;
+      background-color: #ffeef5 !important; /* soft pink glow */
       font-weight: bold;
     }
 
@@ -122,7 +132,7 @@
       .banner { font-size: 1.2em; padding: 10px; }
       button { padding: 8px 12px; font-size: 0.9em; }
       th, td { padding: 8px; font-size: 0.85em; }
-      #dateRange { font-size: 0.95em; }
+      #dateRange { font-size: 0.9em; padding: 5px 10px; }
     }
 
     @media (max-width: 480px) {
@@ -188,11 +198,9 @@
       const banner = document.getElementById("banner");
       const switchBtn = document.getElementById("switchWeek");
 
-      // Banner text and style
       banner.textContent = `${data.name} — ${data.onCall} sedang bertugas shift malam (on-call)`;
       banner.className = `banner week${weekType}`;
 
-      // Match button color
       switchBtn.style.background =
         weekType === "A"
           ? "linear-gradient(90deg, #007bff, #00bfff)"
@@ -222,7 +230,7 @@
       days.forEach((day, i) => {
         const isToday = i === today ? "today" : "";
         const emoji = emojis[i % emojis.length];
-        const dayLabel = i === today ? `${day} 🕑` : day;
+        const dayLabel = i === today ? `${day} 🍓` : day;
 
         tableHTML += `
           <tr class="${isToday}">
