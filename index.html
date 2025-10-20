@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Jadwal Pengasuh Mingguan</title>
   <style>
     body {
@@ -23,27 +23,24 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       transition: background 0.3s ease;
     }
-
     .weekA { background: linear-gradient(90deg, #007bff, #00bfff); }
     .weekB { background: linear-gradient(90deg, #28a745, #70db70); }
 
-    /* Softer, subtle date range style */
+    /* Subtle date-range box (smaller than banner) */
     #dateRange {
       display: inline-block;
       font-size: 1em;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       color: #2f3e46;
-      background: linear-gradient(90deg, #e8eef3, #f5f7fa);
+      background: linear-gradient(90deg, #eef3f8, #f7fafc);
       border: 1px solid #c5d0da;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      opacity: 0.95;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
-    .controls {
-      margin-bottom: 10px;
-    }
+    .controls { margin-bottom: 10px; }
 
     button {
       margin: 6px;
@@ -54,13 +51,9 @@
       font-size: 1em;
       color: white;
       background: linear-gradient(90deg, #007bff, #00bfff);
-      transition: background 0.3s ease, transform 0.1s ease;
+      transition: background 0.3s ease, transform 0.1s ease, opacity .2s;
     }
-
-    button:hover {
-      opacity: 0.9;
-      transform: scale(1.03);
-    }
+    button:hover { opacity: .95; transform: scale(1.02); }
 
     input[type="date"], input[type="password"] {
       margin: 6px;
@@ -72,7 +65,6 @@
       max-width: 60%;
     }
 
-    /* Responsive table container */
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -88,11 +80,11 @@
       background-color: white;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     th, td {
-      border: 1px solid #ddd;
+      border: 1px solid #e6e9ee;
       padding: 10px;
       position: relative;
       overflow: hidden;
@@ -101,11 +93,9 @@
       vertical-align: middle;
     }
 
-    th {
-      background-color: #f2f2f2;
-    }
+    th { background-color: #f8fafc; color: #334155; font-weight: 600; }
 
-    /* Centered emoji backgrounds */
+    /* Centered emoji backgrounds (perfectly centered) */
     td::before {
       content: attr(data-emoji);
       position: absolute;
@@ -118,23 +108,17 @@
       user-select: none;
     }
 
-    tr:hover {
-      background-color: #f9f9f9;
-    }
+    tr:hover { background-color: #fbfdff; }
 
-    .today {
-      background-color: #ffeef5 !important; /* soft pink glow */
-      font-weight: bold;
-    }
+    .today { background-color: #ffeef5 !important; /* soft pink */ font-weight: 700; }
 
     /* Mobile tweaks */
     @media (max-width: 768px) {
       .banner { font-size: 1.2em; padding: 10px; }
-      button { padding: 8px 12px; font-size: 0.9em; }
+      button { padding: 8px 12px; font-size: 0.95em; }
       th, td { padding: 8px; font-size: 0.85em; }
       #dateRange { font-size: 0.9em; padding: 5px 10px; }
     }
-
     @media (max-width: 480px) {
       body { padding: 10px; }
       button { display: block; width: 90%; margin: 8px auto; }
@@ -153,69 +137,112 @@
     <input type="password" id="fname" name="fname" autocomplete="new-password">
     <button id="switchWeek">Switch Week (A ↔ B)</button>
     <button id="exportCSV">Export CSV</button>
-    <br>
-    <label for="refDate">Change reference Sunday:</label>
+    <br/>
+    <label for="refDate">Change reference (choose a date whose week should become Week A):</label>
     <input type="date" id="refDate">
   </div>
 
   <div class="table-container">
-    <table id="scheduleTable"></table>
+    <table id="scheduleTable" role="table" aria-label="Jadwal Pengasuh Mingguan"></table>
   </div>
 
   <script>
-    // === DATA ===
+    // --- Config / Data ---
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     const weekA = { name: "Minggu A", onCall: "Kusni", morning: "Ririn" };
     const weekB = { name: "Minggu B", onCall: "Ririn", morning: "Kusni" };
-    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    const emojis = ["🍳", "☕", "🧺", "🧴", "🫖", "🍽️", "🧹"];
+    const days = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+    const emojis = ["🍳","☕","🧺","🧴","🫖","🍽️","🧹"];
 
-    // === LOGIC ===
-    let referenceSunday = new Date(2025, 9, 19); // 19 Oct 2025 = Week A start
-    let currentWeekType = getWeekType(referenceSunday);
+    // --- Anchor (cornerstone) ---
+    // The week that contains 20–25 Oct 2025 must be Week A.
+    // Determine the Sunday (UTC) for that week and use it as the default anchor.
+    function toUTCDate(y,m,d){
+      return new Date(Date.UTC(y,m,d));
+    }
+    const defaultAnchorSunday = getSundayUTC(toUTCDate(2025,9,20)); // 2025-10-20 -> week that includes 20-25; get Sunday -> 2025-10-19
+    let anchorSunday = new Date(defaultAnchorSunday.getTime()); // anchor in UTC
+    // displayedWeekIndex is the week-index relative to anchorSunday that is currently displayed.
+    // initial display = the index of current calendar week (real current week)
+    let displayedWeekIndex = weekIndexForDate(new Date());
 
-    function getWeekType(ref) {
-      const now = new Date();
-      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
-      return diffWeeks % 2 === 0 ? "A" : "B";
+    // --- Utilities (UTC-consistent) ---
+    function getSundayUTC(date){
+      // Convert input date to UTC midnight, then shift back by weekday to get Sunday (UTC)
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const weekday = d.getUTCDay(); // 0..6 (Sun..Sat)
+      d.setUTCDate(d.getUTCDate() - weekday);
+      // normalize to midnight UTC
+      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
     }
 
-    function getWeekRange(ref) {
-      const now = new Date();
-      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
-      const start = new Date(ref.getTime() + diffWeeks * 7 * 86400000);
-      const end = new Date(start.getTime() + 6 * 86400000);
-      return { start, end };
+    function weekIndexForDate(date){
+      const sunday = getSundayUTC(date);
+      const diff = sunday.getTime() - anchorSunday.getTime();
+      return Math.floor(diff / WEEK_MS);
     }
 
-    function formatDate(date) {
-      return date.toLocaleDateString("id-ID", {
-        day: "numeric", month: "short", year: "numeric"
-      });
+    function weekTypeFromIndex(index){
+      return (index % 2 === 0) ? 'A' : 'B';
     }
 
-    function updateDisplay(weekType) {
-      const data = weekType === "A" ? weekA : weekB;
-      const banner = document.getElementById("banner");
-      const switchBtn = document.getElementById("switchWeek");
+    function formatDate(date){
+      return date.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+    }
 
+    function getSundayOfIndex(index){
+      return new Date(anchorSunday.getTime() + index * WEEK_MS);
+    }
+
+    // --- Rendering ---
+    function updateDisplayForIndex(index){
+      displayedWeekIndex = index;
+      const type = weekTypeFromIndex(index);
+      const data = (type === 'A') ? weekA : weekB;
+
+      // banner
+      const banner = document.getElementById('banner');
+      banner.className = `banner week${type}`;
       banner.textContent = `${data.name} — ${data.onCall} sedang bertugas shift malam (on-call)`;
-      banner.className = `banner week${weekType}`;
 
-      switchBtn.style.background =
-        weekType === "A"
-          ? "linear-gradient(90deg, #007bff, #00bfff)"
-          : "linear-gradient(90deg, #28a745, #70db70)";
+      // make switch button match banner color with fade (CSS transition)
+      const switchBtn = document.getElementById('switchWeek');
+      switchBtn.style.background = (type === 'A')
+        ? 'linear-gradient(90deg, #007bff, #00bfff)'
+        : 'linear-gradient(90deg, #28a745, #70db70)';
 
-      const range = getWeekRange(referenceSunday);
-      document.getElementById("dateRange").textContent =
-        `${data.name} • ${formatDate(range.start)} – ${formatDate(range.end)}`;
+      // date range box: compute displayed week's sunday and saturday (using UTC sunday)
+      const sunday = getSundayOfIndex(index);
+      const saturday = new Date(sunday.getTime() + 6 * 24*60*60*1000);
+      const rangeStr = `${formatDate(sunday)} – ${formatDate(saturday)}`;
+      const dateRangeEl = document.getElementById('dateRange');
 
-      renderTable(data);
+      dateRangeEl.textContent = `${data.name} • ${rangeStr}`;
+
+      // change subtle tint of dateRange to match week type (soft fade)
+      if(type === 'A'){
+        dateRangeEl.style.background = 'linear-gradient(90deg,#eef6ff,#f5fbff)';
+        dateRangeEl.style.borderColor = '#c9def8';
+        dateRangeEl.style.color = '#0f172a';
+      } else {
+        dateRangeEl.style.background = 'linear-gradient(90deg,#edfbef,#f7fff6)';
+        dateRangeEl.style.borderColor = '#c9ecca';
+        dateRangeEl.style.color = '#0f172a';
+      }
+
+      // determine whether displayed week is the same as real current week (for showing 'today' strawberry)
+      const realCurrentWeekIndex = weekIndexForDate(new Date());
+      const showTodayMarker = (realCurrentWeekIndex === displayedWeekIndex);
+
+      renderTable(data, showTodayMarker);
     }
 
-    function renderTable(data) {
-      const today = new Date().getDay();
-      let tableHTML = `
+    function renderTable(data, showTodayMarker){
+      const todayIndex = getSundayUTC(new Date()).getTime() === getSundayOfIndex(displayedWeekIndex).getTime()
+        ? new Date().getUTCDay()
+        : -1; // if displayed week != real week, set -1 so no today marker
+
+      let html = `
         <tr>
           <th>Hari</th>
           <th>Pagi – 11:00</th>
@@ -228,15 +255,15 @@
       `;
 
       days.forEach((day, i) => {
-        const isToday = i === today ? "today" : "";
+        const isTodayClass = (showTodayMarker && i === new Date().getUTCDay()) ? 'today' : '';
         const emoji = emojis[i % emojis.length];
-        const dayLabel = i === today ? `${day} 🍓` : day;
+        const dayLabel = (showTodayMarker && i === new Date().getUTCDay()) ? `${day} 🍓` : day;
 
-        tableHTML += `
-          <tr class="${isToday}">
+        html += `
+          <tr class="${isTodayClass}">
             <td data-emoji="${emoji}">${dayLabel}</td>
             <td data-emoji="${emoji}">${data.morning}</td>
-            <td data-emoji="${emoji}">${data.onCall === data.morning ? "—" : data.onCall}</td>
+            <td data-emoji="${emoji}">${data.onCall === data.morning ? '—' : data.onCall}</td>
             <td data-emoji="${emoji}">${data.morning}</td>
             <td data-emoji="${emoji}">${data.onCall}</td>
             <td data-emoji="${emoji}">${data.morning}</td>
@@ -244,53 +271,62 @@
           </tr>
         `;
       });
-      document.getElementById("scheduleTable").innerHTML = tableHTML;
+
+      document.getElementById('scheduleTable').innerHTML = html;
     }
 
-    // === PASSWORD PROTECTION ===
-    const requiredPassword = "87654321";
-    const pwdInput = document.getElementById("fname");
-    const switchBtn = document.getElementById("switchWeek");
+    // --- Password gate (unchanged) ---
+    const requiredPassword = '87654321';
+    const pwdInput = document.getElementById('fname');
+    const switchBtn = document.getElementById('switchWeek');
     switchBtn.disabled = true;
+    function checkPasswordAndToggle(){ switchBtn.disabled = pwdInput.value !== requiredPassword; }
+    pwdInput.addEventListener('input', checkPasswordAndToggle);
+    window.addEventListener('load', checkPasswordAndToggle);
 
-    function checkPasswordAndToggle() {
-      switchBtn.disabled = pwdInput.value !== requiredPassword;
-    }
-
-    pwdInput.addEventListener("input", checkPasswordAndToggle);
-    window.addEventListener("load", checkPasswordAndToggle);
-
-    // === INTERACTIVITY ===
-    switchBtn.addEventListener("click", () => {
-      currentWeekType = currentWeekType === "A" ? "B" : "A";
-      updateDisplay(currentWeekType);
+    // --- Interactivity: switch button toggles to the NEXT week type (forward) ---
+    switchBtn.addEventListener('click', () => {
+      // compute current real week index
+      const realIndex = weekIndexForDate(new Date());
+      // if displayed currently equals realIndex, move +1 to show alternate type; otherwise also move +1
+      displayedWeekIndex = displayedWeekIndex + 1;
+      updateDisplayForIndex(displayedWeekIndex);
     });
 
-    document.getElementById("refDate").addEventListener("change", (e) => {
-      const newDate = new Date(e.target.value);
-      if (!isNaN(newDate)) {
-        referenceSunday = newDate;
-        currentWeekType = getWeekType(referenceSunday);
-        updateDisplay(currentWeekType);
-      }
-    });
-
-    document.getElementById("exportCSV").addEventListener("click", () => {
-      const rows = document.querySelectorAll("#scheduleTable tr");
+    // export CSV (same)
+    document.getElementById('exportCSV').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#scheduleTable tr');
       const csv = Array.from(rows).map(row =>
-        Array.from(row.children).map(cell => `"${cell.innerText}"`).join(",")
-      ).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
+        Array.from(row.children).map(cell => `"${cell.innerText.replace(/"/g,'""')}"`).join(',')
+      ).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `Jadwal-${currentWeekType}.csv`;
+      const displayedType = weekTypeFromIndex(displayedWeekIndex);
+      a.download = `Jadwal-${displayedType}.csv`;
       a.click();
+      URL.revokeObjectURL(url);
     });
 
-    // === INITIAL RENDER ===
-    updateDisplay(currentWeekType);
-  </script>
+    // refDate: when user chooses a date, make that date's week become Week A (anchor update).
+    // This follows the behavior you had: ref date defines the anchor week which is Week A from then on.
+    document.getElementById('refDate').addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (!val) return;
+      const chosen = new Date(val + 'T00:00:00'); // local midnight
+      const chosenSundayUTC = getSundayUTC(chosen);
+      anchorSunday = new Date(chosenSundayUTC.getTime()); // new anchor (UTC)
+      // after changing anchor, set displayed to the real current week index relative to new anchor:
+      displayedWeekIndex = weekIndexForDate(new Date());
+      updateDisplayForIndex(displayedWeekIndex);
+    });
 
+    // --- initial render ---
+    // ensure anchorSunday default corresponds to week that contains 20–25 Oct 2025 (cornerstone)
+    anchorSunday = new Date(defaultAnchorSunday.getTime());
+    displayedWeekIndex = weekIndexForDate(new Date()); // show current calendar week by default
+    updateDisplayForIndex(displayedWeekIndex);
+  </script>
 </body>
 </html>
