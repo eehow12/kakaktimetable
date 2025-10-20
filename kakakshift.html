@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jadwal Pengasuh Mingguan</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7f9fc;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .banner {
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 1.4em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .weekA { background: linear-gradient(90deg, #007bff, #00bfff); }
+    .weekB { background: linear-gradient(90deg, #28a745, #70db70); }
+
+    #dateRange {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .today {
+      background-color: #fff6b3 !important;
+      font-weight: bold;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      color: white;
+      background-color: #007bff;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    input[type="date"] {
+      margin: 10px;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="banner" class="banner"></div>
+  <div id="dateRange"></div>
+
+  <div>
+    <button id="switchWeek">Switch Week (A ↔ B)</button>
+    <button id="exportCSV">Export CSV</button>
+    <br>
+    <label for="refDate">Change reference Sunday:</label>
+    <input type="date" id="refDate">
+  </div>
+
+  <table id="scheduleTable"></table>
+
+  <script>
+    // === DATA ===
+    const weekA = {
+      name: "Minggu A",
+      onCall: "Kusni",
+      morning: "Ririn"
+    };
+
+    const weekB = {
+      name: "Minggu B",
+      onCall: "Ririn",
+      morning: "Kusni"
+    };
+
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
+    // === LOGIC ===
+    let referenceSunday = new Date(2025, 9, 19); // 19 Oct 2025 is Week A start
+    let currentWeekType = getWeekType(referenceSunday);
+
+    function getWeekType(ref) {
+      const now = new Date();
+      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
+      return diffWeeks % 2 === 0 ? "A" : "B";
+    }
+
+    function getWeekRange(ref) {
+      const now = new Date();
+      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
+      const start = new Date(ref.getTime() + diffWeeks * 7 * 86400000);
+      const end = new Date(start.getTime() + 6 * 86400000);
+      return { start, end };
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric", month: "short", year: "numeric"
+      });
+    }
+
+    function updateDisplay(weekType) {
+      const data = weekType === "A" ? weekA : weekB;
+      const banner = document.getElementById("banner");
+      banner.textContent = `${data.name} — ${data.onCall} sedang bertugas shift malam (on-call)`;
+      banner.className = `banner week${weekType}`;
+
+      const range = getWeekRange(referenceSunday);
+      document.getElementById("dateRange").textContent =
+        `${data.name} • ${formatDate(range.start)} – ${formatDate(range.end)}`;
+
+      renderTable(data);
+    }
+
+    function renderTable(data) {
+      const today = new Date().getDay();
+      let tableHTML = `
+        <tr>
+          <th>Hari</th>
+          <th>Pagi – 11:00</th>
+          <th>11:00 – 14:00</th>
+          <th>14:00 – 16:00</th>
+          <th>16:00 – 18:00</th>
+          <th>18:00 – Malam</th>
+          <th>Shift Malam (on-call)</th>
+        </tr>
+      `;
+      days.forEach((day, i) => {
+        const isToday = i === today ? "today" : "";
+        tableHTML += `
+          <tr class="${isToday}">
+            <td>${day}</td>
+            <td>${data.morning}</td>
+            <td>${data.onCall === data.morning ? "—" : data.onCall}</td>
+            <td>${data.morning}</td>
+            <td>${data.onCall}</td>
+            <td>${data.morning}</td>
+            <td>${data.onCall}</td>
+          </tr>
+        `;
+      });
+      document.getElementById("scheduleTable").innerHTML = tableHTML;
+    }
+
+    // === INTERACTIVITY ===
+    document.getElementById("switchWeek").addEventListener("click", () => {
+      currentWeekType = currentWeekType === "A" ? "B" : "A";
+      updateDisplay(currentWeekType);
+    });
+
+    document.getElementById("refDate").addEventListener("change", (e) => {
+      const newDate = new Date(e.target.value);
+      if (!isNaN(newDate)) {
+        referenceSunday = newDate;
+        currentWeekType = getWeekType(referenceSunday);
+        updateDisplay(currentWeekType);
+      }
+    });
+
+    document.getElementById("exportCSV").addEventListener("click", () => {
+      const rows = document.querySelectorAll("#scheduleTable tr");
+      const csv = Array.from(rows).map(row =>
+        Array.from(row.children).map(cell => `"${cell.innerText}"`).join(",")
+      ).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Jadwal-${currentWeekType}.csv`;
+      a.click();
+    });
+
+    // === INITIAL RENDER ===
+    updateDisplay(currentWeekType);
+  </script>
+
+</body>
+</html>
