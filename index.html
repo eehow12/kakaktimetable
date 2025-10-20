@@ -7,9 +7,10 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #e6ecf3;
+      background-color: #e9eef3;
       text-align: center;
       padding: 20px;
+      margin: 0;
     }
 
     .banner {
@@ -20,21 +21,22 @@
       font-weight: bold;
       margin-bottom: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      transition: background 0.4s;
+      transition: background 0.5s ease;
     }
 
     .weekA { background: linear-gradient(90deg, #007bff, #00bfff); }
     .weekB { background: linear-gradient(90deg, #28a745, #70db70); }
 
     #dateRange {
-      font-size: 1.05em;
+      font-size: 1em;
       margin-bottom: 20px;
       color: #333;
-      background: rgba(255,255,255,0.8);
+      border: 1px solid #ccc;
+      background: rgba(200, 220, 235, 0.5);
       border-radius: 10px;
-      padding: 6px 10px;
       display: inline-block;
-      border: 1px solid rgba(0,0,0,0.1);
+      padding: 5px 12px;
+      transition: background 0.3s ease;
     }
 
     table {
@@ -42,7 +44,7 @@
       max-width: 850px;
       margin: 0 auto;
       border-collapse: collapse;
-      background-color: white;
+      background-color: #f8fbff;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -53,32 +55,48 @@
       padding: 12px;
       text-align: center;
       vertical-align: middle;
+      position: relative;
+      overflow: hidden;
     }
 
     th {
       background-color: #f2f2f2;
-    }
-
-    td::after {
-      content: "🍽️";
-      opacity: 0.2;
-      position: absolute;
-      right: 5px;
-      bottom: 5px;
-      font-size: 1.2em;
+      font-weight: bold;
     }
 
     tr:hover {
       background-color: #f9f9f9;
     }
 
+    /* Alternating background emojis */
+    td:nth-child(2)::after { content: "🍳"; }
+    td:nth-child(3)::after { content: "☕"; }
+    td:nth-child(4)::after { content: "🧽"; }
+    td:nth-child(5)::after { content: "🍽️"; }
+    td:nth-child(6)::after { content: "🪥"; }
+    td:nth-child(7)::after { content: "🛏️"; }
+
+    td::after {
+      opacity: 0.12;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.5em;
+      pointer-events: none;
+    }
+
     .today {
       background-color: #fff0f5 !important;
       font-weight: bold;
+      position: relative;
     }
 
     .today::before {
       content: "🍓 ";
+      position: absolute;
+      left: 8px;
+      top: 8px;
     }
 
     button {
@@ -89,15 +107,22 @@
       cursor: pointer;
       font-size: 1em;
       color: white;
-      background-color: #007bff;
-      transition: 0.2s;
+      transition: background 0.3s ease;
     }
 
-    button:hover {
-      background-color: #0056b3;
+    #switchWeek {
+      background: linear-gradient(90deg, #007bff, #00bfff);
     }
 
-    input[type="date"] {
+    #switchWeek:hover {
+      filter: brightness(0.9);
+    }
+
+    #exportCSV {
+      background: #6c757d;
+    }
+
+    input[type="date"], input[type="password"] {
       margin: 10px;
       padding: 6px;
       border-radius: 6px;
@@ -105,14 +130,17 @@
       font-size: 1em;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 600px) {
       table, th, td {
-        font-size: 0.85em;
-        padding: 6px;
+        font-size: 0.8em;
+        padding: 8px;
+      }
+      .banner {
+        font-size: 1.1em;
       }
       button {
-        font-size: 0.9em;
-        padding: 8px 12px;
+        width: 90%;
+        margin: 5px auto;
       }
     }
   </style>
@@ -123,44 +151,40 @@
   <div id="dateRange"></div>
 
   <div>
-    <label for="fname">Password:</label>
+    <label for="fname">Kata Sandi:</label>
     <input type="password" id="fname" name="fname" autocomplete="new-password">
-    <button id="switchWeek">Switch Week (A ↔ B)</button>
-    <button id="exportCSV">Export CSV</button>
+    <button id="switchWeek">Ganti Minggu (A ↔ B)</button>
+    <button id="exportCSV">Ekspor CSV</button>
     <br>
-    <label for="refDate">Change reference Sunday:</label>
+    <label for="refDate">Ubah Minggu Acuan (Hari Minggu):</label>
     <input type="date" id="refDate">
   </div>
 
   <table id="scheduleTable"></table>
 
   <script>
-    // === DATA ===
     const weekA = { name: "Minggu A", onCall: "Kusni", morning: "Ririn" };
     const weekB = { name: "Minggu B", onCall: "Ririn", morning: "Kusni" };
     const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-    // === MALAYSIA TIME ===
-    function toMalaysiaTime(date) {
-      const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-      return new Date(utc + (8 * 60 * 60 * 1000));
+    // Week A starts Sunday 19 Oct 2025
+    let referenceSunday = new Date(Date.UTC(2025, 9, 19)); // UTC Sunday 19 Oct 2025
+
+    const malaysiaOffsetMs = 8 * 60 * 60 * 1000; // GMT+8
+
+    function getMalaysiaNow() {
+      return new Date(Date.now() + malaysiaOffsetMs);
     }
 
-    // === LOGIC ===
-    let referenceSunday = new Date(2025, 9, 19); // 19 Oct 2025 = Week A start
-    let currentWeekType = getWeekType(referenceSunday);
-
     function getWeekType(ref) {
-      const nowMY = toMalaysiaTime(new Date());
-      const diffDays = Math.floor((nowMY - ref) / (1000 * 60 * 60 * 24));
-      const diffWeeks = Math.floor(diffDays / 7);
+      const now = getMalaysiaNow();
+      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
       return diffWeeks % 2 === 0 ? "A" : "B";
     }
 
     function getWeekRange(ref) {
-      const nowMY = toMalaysiaTime(new Date());
-      const diffDays = Math.floor((nowMY - ref) / (1000 * 60 * 60 * 24));
-      const diffWeeks = Math.floor(diffDays / 7);
+      const now = getMalaysiaNow();
+      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
       const start = new Date(ref.getTime() + diffWeeks * 7 * 86400000);
       const end = new Date(start.getTime() + 6 * 86400000);
       return { start, end };
@@ -173,23 +197,26 @@
     function updateDisplay(weekType) {
       const data = weekType === "A" ? weekA : weekB;
       const banner = document.getElementById("banner");
+      const switchBtn = document.getElementById("switchWeek");
+
       banner.textContent = `${data.name} — ${data.onCall} sedang bertugas shift malam (on-call)`;
       banner.className = `banner week${weekType}`;
+      switchBtn.style.background = weekType === "A"
+        ? "linear-gradient(90deg, #007bff, #00bfff)"
+        : "linear-gradient(90deg, #28a745, #70db70)";
 
       const range = getWeekRange(referenceSunday);
-      const dateRange = document.getElementById("dateRange");
-      dateRange.textContent = `${data.name} • ${formatDate(range.start)} – ${formatDate(range.end)}`;
-      dateRange.className = `week${weekType}`;
+      document.getElementById("dateRange").textContent =
+        `${data.name} • ${formatDate(range.start)} – ${formatDate(range.end)}`;
 
       renderTable(data, range);
     }
 
     function renderTable(data, range) {
-      const todayMY = toMalaysiaTime(new Date());
-      const todayWeekday = todayMY.getDay();
-
-      // check if today is within the displayed week
-      const showToday = todayMY >= range.start && todayMY <= range.end;
+      const malaysiaNow = getMalaysiaNow();
+      const todayIndex = malaysiaNow.getUTCDay(); // 0=Sunday ... 6=Saturday (in UTC)
+      const malaysiaDay = new Date(malaysiaNow.getTime());
+      const malaysiaWeekday = (malaysiaDay.getUTCDay() + 7) % 7;
 
       let tableHTML = `
         <tr>
@@ -202,10 +229,15 @@
           <th>Shift Malam (on-call)</th>
         </tr>
       `;
+
       days.forEach((day, i) => {
-        const isToday = showToday && i === todayWeekday ? "today" : "";
+        const isThisWeek =
+          malaysiaNow >= range.start && malaysiaNow <= range.end;
+        const isToday = isThisWeek && i === malaysiaWeekday;
+        const cls = isToday ? "today" : "";
+
         tableHTML += `
-          <tr class="${isToday}">
+          <tr class="${cls}">
             <td>${day}</td>
             <td>${data.morning}</td>
             <td>${data.onCall === data.morning ? "—" : data.onCall}</td>
@@ -219,24 +251,19 @@
       document.getElementById("scheduleTable").innerHTML = tableHTML;
     }
 
-    // === INTERACTIVITY ===
-    document.getElementById("switchWeek").addEventListener("click", () => {
-      currentWeekType = currentWeekType === "A" ? "B" : "A";
-      updateDisplay(currentWeekType);
-    });
-
-    // password protection
     const requiredPassword = "87654321";
     const pwdInput = document.getElementById("fname");
     const switchBtn = document.getElementById("switchWeek");
     switchBtn.disabled = true;
 
-    function checkPasswordAndToggle() {
+    pwdInput.addEventListener("input", () => {
       switchBtn.disabled = pwdInput.value !== requiredPassword;
-    }
+    });
 
-    pwdInput.addEventListener("input", checkPasswordAndToggle);
-    window.addEventListener("load", checkPasswordAndToggle);
+    switchBtn.addEventListener("click", () => {
+      currentWeekType = currentWeekType === "A" ? "B" : "A";
+      updateDisplay(currentWeekType);
+    });
 
     document.getElementById("refDate").addEventListener("change", (e) => {
       const newDate = new Date(e.target.value);
@@ -249,9 +276,11 @@
 
     document.getElementById("exportCSV").addEventListener("click", () => {
       const rows = document.querySelectorAll("#scheduleTable tr");
-      const csv = Array.from(rows).map(row =>
-        Array.from(row.children).map(cell => `"${cell.innerText}"`).join(",")
-      ).join("\n");
+      const csv = Array.from(rows)
+        .map(row => Array.from(row.children)
+        .map(cell => `"${cell.innerText}"`)
+        .join(","))
+        .join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -260,7 +289,7 @@
       a.click();
     });
 
-    // === INITIAL RENDER ===
+    let currentWeekType = getWeekType(referenceSunday);
     updateDisplay(currentWeekType);
   </script>
 
