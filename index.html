@@ -1,224 +1,296 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Duty Roster</title>
-<style>
-  body {
-    font-family: "Poppins", sans-serif;
-    background: linear-gradient(to bottom right, #d6e1e8, #b8c7d1);
-    margin: 0;
-    padding: 20px;
-    text-align: center;
-    color: #333;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jadwal Pengasuh Mingguan</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7f9fc;
+      text-align: center;
+      padding: 20px;
+      transition: background 0.3s ease;
+    }
 
-  h1 {
-    font-size: 1.8em;
-    margin-bottom: 0.3em;
-  }
+    .banner {
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 1.4em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: background 0.3s ease;
+    }
 
-  h2 {
-    margin-top: 0;
-    font-weight: 500;
-    color: #444;
-  }
+    .weekA { background: linear-gradient(90deg, #007bff, #00bfff); }
+    .weekB { background: linear-gradient(90deg, #28a745, #70db70); }
 
-  table {
-    width: 100%;
-    max-width: 900px;
-    margin: 20px auto;
-    border-collapse: collapse;
-    background-color: #fdfdfd;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
+    #dateRange {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+      color: #333;
+    }
 
-  th, td {
-    padding: 14px;
-    border: 1px solid #ccc;
-    text-align: center;
-    vertical-align: middle;
-    position: relative;
-  }
+    .controls {
+      margin-bottom: 10px;
+    }
 
-  th {
-    background: rgba(200, 220, 235, 0.8);
-    font-weight: 600;
-  }
+    button {
+      margin: 6px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      color: white;
+      background: linear-gradient(90deg, #007bff, #00bfff);
+      transition: background 0.3s ease, transform 0.1s ease;
+    }
 
-  .week-row {
-    background: rgba(230, 238, 245, 0.7);
-    border: 1px solid #aebdc6;
-    font-size: 0.9em;
-    padding: 8px;
-  }
+    button:hover {
+      opacity: 0.9;
+      transform: scale(1.03);
+    }
 
-  .today {
-    background: #ffeaf3 !important;
-    font-weight: bold;
-    color: #d6336c;
-    border: 2px solid #f48fb1;
-  }
-
-  .night-shift {
-    background-color: #fff5e6;
-    font-weight: bold;
-    color: #e65100;
-  }
-
-  .night-shift-line {
-    font-size: 1.1em;
-    background: #ffe8cc;
-    color: #d35400;
-    padding: 10px;
-    border-radius: 8px;
-    display: inline-block;
-    margin: 10px 0;
-    font-weight: 600;
-  }
-
-  button {
-    padding: 10px 16px;
-    margin: 5px;
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  button:hover {
-    background-color: #357abd;
-  }
-
-  .cell-bg {
-    opacity: 0.25;
-    position: absolute;
-    bottom: 50%;
-    left: 50%;
-    transform: translate(-50%, 50%);
-    font-size: 1.4em;
-    pointer-events: none;
-  }
-
-  @media (max-width: 768px) {
-    th, td {
+    input[type="date"], input[type="password"] {
+      margin: 6px;
       padding: 8px;
-      font-size: 0.85em;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      width: 180px;
+      max-width: 60%;
+    }
+
+    /* Responsive table container */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
-      width: 95%;
+      width: 100%;
+      min-width: 700px;
+      max-width: 900px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-  }
-</style>
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+      word-wrap: break-word;
+      font-size: 0.95em;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    /* Centered emoji backgrounds */
+    td::before {
+      content: attr(data-emoji);
+      position: absolute;
+      font-size: 2.2em;
+      opacity: 0.08;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .today {
+      background-color: #fff6b3 !important;
+      font-weight: bold;
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 768px) {
+      .banner { font-size: 1.2em; padding: 10px; }
+      button { padding: 8px 12px; font-size: 0.9em; }
+      th, td { padding: 8px; font-size: 0.85em; }
+      #dateRange { font-size: 0.95em; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      button { display: block; width: 90%; margin: 8px auto; }
+      input[type="date"], input[type="password"] { width: 90%; }
+      table { min-width: 650px; }
+    }
+  </style>
 </head>
 <body>
 
-<h1>Duty Roster 🍳🧼</h1>
-<h2 id="weekLabel">Loading...</h2>
-<div id="nightShiftLine" class="night-shift-line"></div>
-<div>
-  <button onclick="switchWeek('A')">Switch to Week A</button>
-  <button onclick="switchWeek('B')">Switch to Week B</button>
-</div>
-<table id="rosterTable"></table>
+  <div id="banner" class="banner"></div>
+  <div id="dateRange"></div>
 
-<script>
-// ---------------- TIMEZONE FIX (Malaysia GMT+8) ---------------- //
-function toMalaysiaTime(date) {
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-  return new Date(utc + 8 * 60 * 60 * 1000);
-}
+  <div>
+    <label for="fname">Password:</label>
+    <input type="password" id="fname" name="fname" autocomplete="new-password">
+    <button id="switchWeek">Switch Week (A ↔ B)</button>
+    <button id="exportCSV">Export CSV</button>
+    <br>
+    <label for="refDate">Change reference Sunday:</label>
+    <input type="date" id="refDate">
+  </div>
 
-// Reference Sunday for Week A (19 Oct 2025)
-const referenceDate = new Date("2025-10-19T00:00:00+08:00");
-let currentWeek = getWeekType(referenceDate);
+  <div class="table-container">
+    <table id="scheduleTable"></table>
+  </div>
 
-// Determine if Week A or B
-function getWeekType(ref) {
-  const nowMY = toMalaysiaTime(new Date());
-  const diffDays = Math.floor((nowMY - ref) / (1000 * 60 * 60 * 24));
-  const diffWeeks = Math.floor(diffDays / 7);
-  return diffWeeks % 2 === 0 ? "A" : "B";
-}
+  <script>
+    // === DATA ===
+    const weekA = { name: "Minggu A", onCall: "Kusni", morning: "Ririn" };
+    const weekB = { name: "Minggu B", onCall: "Ririn", morning: "Kusni" };
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const emojis = ["🍳", "☕", "🧺", "🧴", "🫖", "🍽️", "🧹"];
 
-function getWeekRange(ref) {
-  const nowMY = toMalaysiaTime(new Date());
-  const diffDays = Math.floor((nowMY - ref) / (1000 * 60 * 60 * 24));
-  const diffWeeks = Math.floor(diffDays / 7);
-  const start = new Date(ref.getTime() + diffWeeks * 7 * 86400000);
-  const end = new Date(start.getTime() + 6 * 86400000);
-  return { start, end };
-}
+    // === LOGIC ===
+    let referenceSunday = new Date(2025, 9, 19); // 19 Oct 2025 = Week A start
+    let currentWeekType = getWeekType(referenceSunday);
 
-// ---------------- TIMETABLE DATA ---------------- //
-const weekA = [
-  ["Sunday", "Kusni 🍳", "Afiq 🧼"],
-  ["Monday", "Kusni 🍳", "Afiq 🧼"],
-  ["Tuesday", "Kusni 🍳", "Afiq 🧼"],
-  ["Wednesday", "Afiq 🍳", "Kusni 🧼"],
-  ["Thursday", "Afiq 🍳", "Kusni 🧼"],
-  ["Friday", "Afiq 🍳", "Kusni 🧼"],
-  ["Saturday", "Afiq 🍳", "Kusni 🧼"]
-];
+    function getWeekType(ref) {
+      const now = new Date();
+      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
+      return diffWeeks % 2 === 0 ? "A" : "B";
+    }
 
-const weekB = [
-  ["Sunday", "Afiq 🍳", "Kusni 🧼"],
-  ["Monday", "Afiq 🍳", "Kusni 🧼"],
-  ["Tuesday", "Afiq 🍳", "Kusni 🧼"],
-  ["Wednesday", "Kusni 🍳", "Afiq 🧼"],
-  ["Thursday", "Kusni 🍳", "Afiq 🧼"],
-  ["Friday", "Kusni 🍳", "Afiq 🧼"],
-  ["Saturday", "Kusni 🍳", "Afiq 🧼"]
-];
+    function getWeekRange(ref) {
+      const now = new Date();
+      const diffWeeks = Math.floor((now - ref) / (1000 * 60 * 60 * 24 * 7));
+      const start = new Date(ref.getTime() + diffWeeks * 7 * 86400000);
+      const end = new Date(start.getTime() + 6 * 86400000);
+      return { start, end };
+    }
 
-function renderTable() {
-  const table = document.getElementById("rosterTable");
-  const data = currentWeek === "A" ? weekA : weekB;
-  const todayMY = toMalaysiaTime(new Date());
-  const todayIndex = todayMY.getDay(); // Sunday=0
+    function formatDate(date) {
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric", month: "short", year: "numeric"
+      });
+    }
 
-  const weekRange = getWeekRange(referenceDate);
-  const startDate = weekRange.start.toLocaleDateString("en-GB");
-  const endDate = weekRange.end.toLocaleDateString("en-GB");
+    function updateDisplay(weekType) {
+      const data = weekType === "A" ? weekA : weekB;
+      const banner = document.getElementById("banner");
+      const switchBtn = document.getElementById("switchWeek");
 
-  document.getElementById("weekLabel").textContent = `Week ${currentWeek} (${startDate} - ${endDate})`;
+      // Update banner text and style
+      banner.textContent = `${data.name} — ${data.onCall} sedang bertugas shift malam (on-call)`;
+      banner.className = `banner week${weekType}`;
 
-  let html = `
-    <tr class="week-row"><th colspan="3">Week ${currentWeek} (${startDate} - ${endDate})</th></tr>
-    <tr><th>Day</th><th>Morning Shift</th><th>Night Shift</th></tr>
-  `;
+      // Update button color to match banner
+      switchBtn.style.background =
+        weekType === "A"
+          ? "linear-gradient(90deg, #007bff, #00bfff)"
+          : "linear-gradient(90deg, #28a745, #70db70)";
 
-  data.forEach((row, index) => {
-    const isToday = index === todayIndex;
-    html += `
-      <tr class="${isToday ? "today" : ""}">
-        <td>${row[0]} ${isToday ? "🍓" : ""}<span class="cell-bg">🍳</span></td>
-        <td>${row[1]}<span class="cell-bg">🥄</span></td>
-        <td class="night-shift">${row[2]}<span class="cell-bg">🛁</span></td>
-      </tr>
-    `;
-  });
+      const range = getWeekRange(referenceSunday);
+      document.getElementById("dateRange").textContent =
+        `${data.name} • ${formatDate(range.start)} – ${formatDate(range.end)}`;
 
-  table.innerHTML = html;
+      renderTable(data);
+    }
 
-  // Update night shift line
-  const nightPerson = currentWeek === "A" ? "Afiq 🧼" : "Kusni 🧼";
-  document.getElementById("nightShiftLine").textContent = `🌙 Night Shift this week: ${nightPerson}`;
-}
+    function renderTable(data) {
+      const today = toMalaysiaTime(new Date()).getDay();
+      let tableHTML = `
+        <tr>
+          <th>Hari</th>
+          <th>Pagi – 11:00</th>
+          <th>11:00 – 14:00</th>
+          <th>14:00 – 16:00</th>
+          <th>16:00 – 18:00</th>
+          <th>18:00 – Malam</th>
+          <th>Shift Malam (on-call)</th>
+        </tr>
+      `;
 
-function switchWeek(type) {
-  currentWeek = type;
-  renderTable();
-}
+      days.forEach((day, i) => {
+        const isToday = i === today ? "today" : "";
+        const emoji = emojis[i % emojis.length];
+        const dayLabel = i === today ? `${day} 🍓` : day;
 
-renderTable();
-</script>
+        tableHTML += `
+          <tr class="${isToday}">
+            <td data-emoji="${emoji}">${dayLabel}</td>
+            <td data-emoji="${emoji}">${data.morning}</td>
+            <td data-emoji="${emoji}">${data.onCall === data.morning ? "—" : data.onCall}</td>
+            <td data-emoji="${emoji}">${data.morning}</td>
+            <td data-emoji="${emoji}">${data.onCall}</td>
+            <td data-emoji="${emoji}">${data.morning}</td>
+            <td data-emoji="${emoji}">${data.onCall}</td>
+          </tr>
+        `;
+      });
+      document.getElementById("scheduleTable").innerHTML = tableHTML;
+    }
+
+    // === PASSWORD PROTECTION ===
+    const requiredPassword = "87654321";
+    const pwdInput = document.getElementById("fname");
+    const switchBtn = document.getElementById("switchWeek");
+    switchBtn.disabled = true;
+
+    function checkPasswordAndToggle() {
+      switchBtn.disabled = pwdInput.value !== requiredPassword;
+    }
+
+    pwdInput.addEventListener("input", checkPasswordAndToggle);
+    window.addEventListener("load", checkPasswordAndToggle);
+
+    // === INTERACTIVITY ===
+    switchBtn.addEventListener("click", () => {
+      currentWeekType = currentWeekType === "A" ? "B" : "A";
+      updateDisplay(currentWeekType);
+    });
+
+    document.getElementById("refDate").addEventListener("change", (e) => {
+      const newDate = new Date(e.target.value);
+      if (!isNaN(newDate)) {
+        referenceSunday = newDate;
+        currentWeekType = getWeekType(referenceSunday);
+        updateDisplay(currentWeekType);
+      }
+    });
+
+    document.getElementById("exportCSV").addEventListener("click", () => {
+      const rows = document.querySelectorAll("#scheduleTable tr");
+      const csv = Array.from(rows).map(row =>
+        Array.from(row.children).map(cell => `"${cell.innerText}"`).join(",")
+      ).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Jadwal-${currentWeekType}.csv`;
+      a.click();
+    });
+
+    // helper: Malaysia time
+    function toMalaysiaTime(date) {
+      const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+      return new Date(utc + (8 * 60 * 60 * 1000)); // +8 hours
+    }
+
+    // === INITIAL RENDER ===
+    updateDisplay(currentWeekType);
+  </script>
 
 </body>
 </html>
